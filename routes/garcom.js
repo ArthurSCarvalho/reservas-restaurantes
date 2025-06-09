@@ -5,9 +5,10 @@ const db = require('../db/database');
 // Confirmar reserva
 router.put('/confirmar/:id', (req, res) => {
   const { id } = req.params;
+  const { garcom } = req.body;
 
-  const query = `UPDATE reservas SET status = 'confirmada' WHERE id = ? AND status = 'reservado'`;
-  db.run(query, [id], function (err) {
+  const query = `UPDATE reservas SET status = 'confirmada', garcom = ? WHERE id = ? AND status = 'reservado'`;
+  db.run(query, [garcom, id], function (err) {
     if (err) return res.status(500).json({ erro: 'Erro ao confirmar reserva.' });
 
     if (this.changes === 0) {

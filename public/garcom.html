@@ -11,11 +11,13 @@
 <table class="table table-striped mt-3" id="tabelaReservas">
   <thead>
     <tr>
-      <th>Nome</th>
+      <th>ID</th>
+      <th>Responsável</th>
       <th>Data</th>
       <th>Hora</th>
       <th>Mesa</th>
       <th>Pessoas</th>
+      <th>Status</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -25,13 +27,21 @@
     <div class="row w-100">
       <!-- Coluna da Imagem -->
       <div class="col-md-4 d-none d-md-block p-0">
-        <img src="../img/restaurante.jpg" alt="Restaurante" class="img-fluid img-lateral w-100 h-100"  alt="Restaurante">
+        <img src="img/restaurante.jpg" alt="Restaurante" class="img-fluid img-lateral w-100 h-100"  alt="Restaurante">
       </div>
       
       <!-- Coluna do Formulário -->
       <div class="col-md-8 d-flex flex-column justify-content-center p-5">
         <h1 class="mb-4">Confirmar Reserva</h1>
         <form id="confirmarReservaForm">
+           <div class="mb-3">
+            <label for="id" class="form-label">ID da Reserva</label>
+            <input type="number" class="form-control" id="id" required>
+          </div>
+          <div class="mb-3">
+          <label for="garcom" class="form-label">Seu nome (Garçom)</label>
+          <input type="text" class="form-control" id="garcom" required>
+        </div>
           <div class="mb-3">
             <label for="mesa" class="form-label">Número da Mesa</label>
             <input type="number" class="form-control" id="mesa" required>
@@ -50,27 +60,29 @@
       </div>
     </div>
   </div>
+<script>
+ document.getElementById("confirmarReservaForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("id").value;
+    const garcom = document.getElementById("garcom").value;
 
-  <script>
-    document.getElementById("confirmarReservaForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const confirmacao = {
-        mesa: parseInt(document.getElementById("mesa").value),
-        data: document.getElementById("data").value,
-        hora: document.getElementById("hora").value
-      };
-
-      const res = await fetch("http://localhost:3000/atendente/reservas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(confirmacao)
-      });
-
-      const resposta = await res.json();
-      document.getElementById("resposta").innerText = resposta.message || JSON.stringify(resposta);
+    const res = await fetch(`http://localhost:3000/garcom/confirmar/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ garcom })
     });
+
+    const resposta = await res.json();
+    document.getElementById("resposta").innerText = resposta.mensagem || JSON.stringify(resposta);
+
+    // Limpa o formulário
+    document.getElementById("confirmarReservaForm").reset();
+    // Atualiza a tabela de reservas
+    carregarReservas();
+  });
+
   async function carregarReservas() {
-    const res = await fetch('/reservas');
+    const res = await fetch('/atendente/reservas');
     const reservas = await res.json();
     const tbody = document.querySelector("#tabelaReservas tbody");
     tbody.innerHTML = "";
@@ -78,11 +90,13 @@
     reservas.forEach(r => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${r.nome}</td>
+        <td>${r.id}</td>
+        <td>${r.responsavel}</td>
         <td>${r.data}</td>
         <td>${r.hora}</td>
         <td>${r.mesa}</td>
-        <td>${r.pessoas}</td>
+        <td>${r.quantidade_pessoas}</td>
+        <td>${r.status}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -90,7 +104,6 @@
 
   // Carrega as reservas ao abrir a tela
   carregarReservas();
-
-  </script>
+</script>
 </body>
 </html>

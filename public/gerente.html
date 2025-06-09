@@ -25,7 +25,7 @@
     <div class="row w-100">
       <!-- Coluna da Imagem -->
       <div class="col-md-4 d-none d-md-block p-0">
-        <img src="..//img/restaurante.jpg" alt="Restaurante" class="img-fluid img-lateral w-100 h-100" alt="Restaurante">
+        <img src="img/restaurante.jpg" alt="Restaurante" class="img-fluid img-lateral w-100 h-100" alt="Restaurante">
       </div>
       
       <!-- Coluna dos Relatórios -->
@@ -35,10 +35,10 @@
           <div class="mb-3">
             <label for="tipoRelatorio" class="form-label">Tipo de Relatório</label>
             <select class="form-select" id="tipoRelatorio" required>
-              <option value="">Selecione</option>
-              <option value="periodo">Reservas por Período</option>
-              <option value="mesa">Reservas por Mesa</option>
-              <option value="garcom">Reservas por Garçom</option>
+              <option value="">Selecione o tipo de relatorio</option>
+              <option value="periodo">por Período</option>
+              <option value="mesa">por Mesa</option>
+              <option value="garcom">por Garçom</option>
             </select>
           </div>
           <div id="camposExtras"></div>
@@ -53,77 +53,91 @@
     const tipoRelatorio = document.getElementById("tipoRelatorio");
     const camposExtras = document.getElementById("camposExtras");
 
-    tipoRelatorio.addEventListener("change", () => {
+      tipoRelatorio.addEventListener("change", () => {
       camposExtras.innerHTML = "";
       if (tipoRelatorio.value === "periodo") {
         camposExtras.innerHTML = `
-          <div class="mb-3">
-            <label for="inicio" class="form-label">Data Inicial</label>
-            <input type="date" class="form-control" id="inicio" required>
-          </div>
-          <div class="mb-3">
-            <label for="fim" class="form-label">Data Final</label>
-            <input type="date" class="form-control" id="fim" required>
-          </div>
+          <input type="date" id="inicio" class="form-control mb-2" placeholder="Data início">
+          <input type="date" id="fim" class="form-control" placeholder="Data fim">
         `;
       } else if (tipoRelatorio.value === "mesa") {
         camposExtras.innerHTML = `
-          <div class="mb-3">
-            <label for="mesa" class="form-label">Número da Mesa</label>
-            <input type="number" class="form-control" id="mesa" required>
-          </div>
+          <input type="number" id="mesa" class="form-control" placeholder="Número da mesa">
         `;
       } else if (tipoRelatorio.value === "garcom") {
         camposExtras.innerHTML = `
-          <div class="mb-3">
-            <label for="garcom" class="form-label">Nome do Garçom</label>
-            <input type="text" class="form-control" id="garcom" required>
-          </div>
+          <input type="text" id="nomeGarcom" class="form-control" placeholder="Nome do garçom">
         `;
       }
     });
+    function mostrarRelatorio(relatorio) {
+  const respostaDiv = document.getElementById("resposta");
+  if (!Array.isArray(relatorio) || relatorio.length === 0) {
+    respostaDiv.innerText = "Nenhum dado encontrado.";
+    return;
+  }
+  let html = `<table class="table table-bordered mt-3"><thead><tr>
+    <th>ID</th><th>Responsável</th><th>Data</th><th>Hora</th><th>Mesa</th><th>Pessoas</th><th>Status</th><th>Garçom</th>
+  </tr></thead><tbody>`;
+  relatorio.forEach(r => {
+    html += `<tr>
+      <td>${r.id}</td>
+      <td>${r.responsavel}</td>
+      <td>${r.data}</td>
+      <td>${r.hora}</td>
+      <td>${r.mesa}</td>
+      <td>${r.quantidade_pessoas}</td>
+      <td>${r.status}</td>
+      <td>${r.garcom || ""}</td>
+    </tr>`;
+  });
+  html += "</tbody></table>";
+  respostaDiv.innerHTML = html;
+}
 
-    document.getElementById("relatorioForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const tipo = tipoRelatorio.value;
-      const dados = {};
 
-      if (tipo === "periodo") {
-        dados.inicio = document.getElementById("inicio").value;
-        dados.fim = document.getElementById("fim").value;
-      } else if (tipo === "mesa") {
-        dados.mesa = parseInt(document.getElementById("mesa").value);
-      } else if (tipo === "garcom") {
-        dados.garcom = document.getElementById("garcom").value;
-      }
+ document.getElementById("relatorioForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const tipo = tipoRelatorio.value;
+  let url = "";
 
-      const res = await fetch(`http://localhost:3000/atendente/reservas${tipo}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dados)
-      });
+  if (tipo === "periodo") {
+    const inicio = document.getElementById("inicio").value;
+    const fim = document.getElementById("fim").value;
+    url = `/gerente/periodo?inicio=${inicio}&fim=${fim}`;
+  } else if (tipo === "mesa") {
+    const mesa = document.getElementById("mesa").value;
+    url = `/gerente/mesa/${mesa}`;
+  } else if (tipo === "garcom") {
+    const nome = document.getElementById("nomeGarcom").value;
+    url = `/gerente/garcom/${nome}`;
+  } else {
+    document.getElementById("resposta").innerText = "Selecione um tipo de relatório.";
+    return;
+  }
 
-      const resposta = await res.json();
-      document.getElementById("resposta").innerText = JSON.stringify(resposta, null, 2);
-    });
+  const res = await fetch(url);
+  const resposta = await res.json();
+  mostrarRelatorio(resposta);
+});
 
   async function carregarReservas() {
-    const res = await fetch('/reservas');
+    const res = await fetch('http://localhost:3000/atendente/reservas');
     const reservas = await res.json();
     const tbody = document.querySelector("#tabelaReservas tbody");
     tbody.innerHTML = "";
 
     reservas.forEach(r => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${r.nome}</td>
-        <td>${r.data}</td>
-        <td>${r.hora}</td>
-        <td>${r.mesa}</td>
-        <td>${r.pessoas}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${r.responsavel}</td>
+    <td>${r.data}</td>
+    <td>${r.hora}</td>
+    <td>${r.mesa}</td>
+    <td>${r.quantidade_pessoas}</td>
+  `;
+  tbody.appendChild(tr);
+});
   }
 
   // Carrega as reservas ao abrir a tela

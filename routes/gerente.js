@@ -25,10 +25,11 @@ router.get('/mesa/:mesa', (req, res) => {
 });
 
 // Relatório de reservas confirmadas
-router.get('/confirmadas', (req, res) => {
-  const query = `SELECT * FROM reservas WHERE status = 'confirmada'`;
-  db.all(query, [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: 'Erro ao buscar reservas confirmadas.' });
+router.get('/garcom/:nome', (req, res) => {
+  const { nome } = req.params;
+  db.all(`SELECT * FROM reservas WHERE garcom = ? AND status = 'confirmada'`, [nome], (err, rows) => {
+    if (err) return res.status(500).json({ erro: 'Erro ao buscar reservas.' });
+    if (rows.length === 0) return res.json({ mensagem: 'Nenhuma reserva confirmada por este garçom.' });
     res.json(rows);
   });
 });

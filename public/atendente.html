@@ -17,11 +17,21 @@
   </style>
 </head>
 <body>
+<table class="table table-striped mt-3" id="tabelaReservas">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Responsável</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
   <div class="container-fluid container-custom d-flex align-items-center">
     <div class="row flex-grow-1">
       <!-- Coluna da Imagem (1/3) -->
       <div class="col-md-4 d-none d-md-block p-0">
-        <img src="../img/restaurante.jpg" alt="Restaurante" class="img-fluid img-lateral w-100 h-100">
+        <img src="img/restaurante.jpg" alt="Restaurante" class="img-fluid img-lateral w-100 h-100">
       </div>
 
       <!-- Coluna do Formulário (2/3) -->
@@ -41,14 +51,19 @@
             <input type="time" class="form-control" id="hora" required>
           </div>
           <div class="mb-3">
-            <label for="mesa" class="form-label">Número da Mesa</label>
+            <label for="mesa" class="form-label">Mesa</label>
             <input type="number" class="form-control" id="mesa" required>
           </div>
           <div class="mb-3">
             <label for="pessoas" class="form-label">Quantidade de Pessoas</label>
             <input type="number" class="form-control" id="pessoas" required>
           </div>
-          <button type="submit"  class="btn btn-primary">Criar Reserva</button>
+          <div class="mb-3">
+            <label for="cancelarId" class="form-label">Cancelar Reserva (ID)</label>
+            <input type="number" class="form-control" id="cancelarId">
+            <button type="button" class="btn btn-danger mt-2" id="btnCancelar">Cancelar Reserva</button>
+          </div>
+          <button type="submit" class="btn btn-primary">Criar Reserva</button>
         </form>
 
         <div id="resposta" class="mt-3"></div>
@@ -60,14 +75,14 @@
     document.getElementById("reservaForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const reserva = {
-        nome: document.getElementById("nome").value,
+        responsavel: document.getElementById("nome").value,
         data: document.getElementById("data").value,
         hora: document.getElementById("hora").value,
         mesa: parseInt(document.getElementById("mesa").value),
-        pessoas: parseInt(document.getElementById("pessoas").value)
+        quantidade_pessoas: parseInt(document.getElementById("pessoas").value)
       };
 
-      const res = await fetch("http://localhost:3000/atendente/reservas", {
+      const res = await fetch("http://localhost:3000/atendente/reservar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reserva)
@@ -75,7 +90,45 @@
 
       const resposta = await res.json();
       document.getElementById("resposta").innerText = resposta.message || JSON.stringify(resposta);
+      document.getElementById("reservaForm").reset();
     });
+
+    document.getElementById("btnCancelar").addEventListener("click", async () => {
+      const id = document.getElementById("cancelarId").value;
+      if (!id) {
+        document.getElementById("resposta").innerText = "Informe o ID da reserva para cancelar.";
+        return;
+      }
+
+      const res = await fetch(`http://localhost:3000/atendente/cancelar/${id}`, {
+        method: "DELETE"
+      });
+      
+
+      reservas.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${r.responsavel}</td>
+        <td>${r.data}</td>
+        <td>${r.hora}</td>
+        <td>${r.mesa}</td>
+        <td>${r.quantidade_pessoas}</td>
+        <td>${r.status}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+      const resposta = await res.json();
+      document.getElementById("resposta").innerText = resposta.message || JSON.stringify(resposta);
+      document.getElementById("cancelarId").value = "";
+    });
+    const resposta = await res.json();
+    if (resposta.id) {
+      document.getElementById("resposta").innerText = `${resposta.mensagem} (ID: ${resposta.id})`;
+    } else {
+      document.getElementById("resposta").innerText = resposta.mensagem || JSON.stringify(resposta);
+    }
   </script>
 </body>
 </html>
