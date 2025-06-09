@@ -16,6 +16,24 @@ router.post('/reservar', (req, res) => {
     res.status(201).json({ message: 'Reserva criada com sucesso', reserva_id: this.lastID });
   });
 });
+// cancelar reserva
+router.delete('/cancelar/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM reservas WHERE id = ?', [id], function(err) {
+    if (err) return res.status(500).json({ erro: 'Erro ao cancelar reserva.' });
+    if (this.changes === 0) return res.status(404).json({ mensagem: 'Reserva não encontrada.' });
+    res.json({ mensagem: 'Reserva cancelada com sucesso!' });
+  });
+});
+//retornar id reserva
+router.post('/reservar', (req, res) => {
+  const { responsavel, data, hora, mesa, quantidade_pessoas } = req.body;
+  const query = `INSERT INTO reservas (responsavel, data, hora, mesa, quantidade_pessoas, status) VALUES (?, ?, ?, ?, ?, 'reservado')`;
+  db.run(query, [responsavel, data, hora, mesa, quantidade_pessoas], function (err) {
+    if (err) return res.status(500).json({ erro: 'Erro ao criar reserva.' });
+    res.json({ mensagem: 'Reserva criada com sucesso!', id: this.lastID });
+  });
+});
 
 //Listar das reservas
 router.get('/reservas', (req, res) => {
